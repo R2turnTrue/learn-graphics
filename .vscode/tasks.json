@@ -6,9 +6,9 @@
         {
             "label": "cmake build and run",
             "type": "shell",
-            "command": "cmake .. -G \"Visual Studio 17 2022\" && cmake --build ./ && cd ./Debug && learngraphics.exe",
+            "command": "cmake -S . -B build -G \"Ninja\" && cd build && ninja && cd .. && echo %cd% && build\\learngraphics.exe",
             "options": {
-                "cwd": "${workspaceFolder}/build"
+                "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [],
             "group": {
