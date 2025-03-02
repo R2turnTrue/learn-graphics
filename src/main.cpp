@@ -9,6 +9,7 @@
 #include <iostream>
 #include "shader.h"
 #include <math.h>
+#include "camera.h"
 
 float mixFactor = 0.0f;
 float dt = 0.0f;
@@ -26,34 +27,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     viewportWidth = width;
     viewportHeight = height;
     glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow *window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        mixFactor = mixFactor + dt * 1.0f;
-        
-        if (mixFactor > 1.0f)
-        {
-            mixFactor = 1.0f;
-        }
-    }
-
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        mixFactor = mixFactor - dt * 1.0f;
-
-        if (mixFactor < 0.0f)
-        {
-            mixFactor = 0.0f;
-        }
-    }
 }
 
 struct vertex
@@ -132,22 +105,87 @@ vertex vertices[] = {
 };
 
 glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f), 
+    /*glm::vec3( 0.0f,  0.0f,  0.0f), 
     glm::vec3( 2.0f,  5.0f, -15.0f), 
     glm::vec3(-1.5f, -2.2f, -2.5f),  
-    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3(-3.8f, -2.0f, -12.3f),  */
     glm::vec3( 2.4f, -0.4f, -3.5f),  
-    glm::vec3(-1.7f,  3.0f, -7.5f),  
+    /*glm::vec3(-1.7f,  3.0f, -7.5f),  
     glm::vec3( 1.3f, -2.0f, -2.5f),  
     glm::vec3( 1.5f,  2.0f, -2.5f), 
     glm::vec3( 1.5f,  0.2f, -1.5f), 
-    glm::vec3(-1.3f,  1.0f, -1.5f)  
+    glm::vec3(-1.3f,  1.0f, -1.5f)  */
 };
 
 unsigned int indices[] = {
     0, 1, 2,
     2, 3, 1
 };
+
+Camera camera;
+
+float lastX = 1280 / 2;
+float lastY = 720 / 2;
+
+float sensitivity = 0.15f;
+
+float moveSpeed = 15.0f;
+
+float yaw = 0.0f;
+float pitch = 0.0f;
+
+bool firstMouse = true;
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if(firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.handleMouseMovement(xoffset, yoffset);
+}
+
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+    {
+        mixFactor = mixFactor + dt * 1.0f;
+        
+        if (mixFactor > 1.0f)
+        {
+            mixFactor = 1.0f;
+        }
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+    {
+        mixFactor = mixFactor - dt * 1.0f;
+
+        if (mixFactor < 0.0f)
+        {
+            mixFactor = 0.0f;
+        }
+    }
+
+    camera.handleKeyboard(window, dt);
+}
 
 int main() {
     glfwInit();
@@ -165,6 +203,9 @@ int main() {
         glfwTerminate();
         return -1;
     }
+
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glfwMakeContextCurrent(window);
 
@@ -241,7 +282,7 @@ int main() {
         dt = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         std::string title_string = "Learn OpenGL! - FPS: ";
@@ -266,11 +307,14 @@ int main() {
         //int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
-        glm::mat4 view(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        //float radius = 10.0f;
+        //cameraPos.x = sin(glfwGetTime()) * radius;
+        //cameraPos.z = cos(glfwGetTime()) * radius;
+
+        glm::mat4 view = camera.getViewMatrix();
 
         glm::mat4 projection(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), (float)viewportWidth/(float)viewportHeight, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(90.0f), (float)viewportWidth/(float)viewportHeight, 0.1f, 100.0f);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
@@ -285,7 +329,7 @@ int main() {
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < sizeof(cubePositions) / sizeof(glm::vec3); i++)
         {
             glm::mat4 model(1.0f);
             model = glm::translate(model, cubePositions[i]);
