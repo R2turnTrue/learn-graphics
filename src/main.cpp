@@ -10,6 +10,10 @@
 #include "shader.h"
 #include <math.h>
 #include "camera.h"
+#include "hsv2rgb.h"
+#include "texture.h"
+#include <vector>
+#include "light.h"
 
 float mixFactor = 0.0f;
 float dt = 0.0f;
@@ -41,6 +45,10 @@ struct vertex
 
     float u;
     float v;
+
+    float nx;
+    float ny;
+    float nz;
 };
 
 /*
@@ -61,60 +69,60 @@ vertex vertices[] = {
 */
 
 vertex vertices[] = {
-    { -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-    { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f },
-    { 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f },
-    { 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-    { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f },
-    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
+    { -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.0f, -1.0f },
+    { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,  0.0f, -1.0f },
+    { 0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f, -1.0f },
+    { 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,  0.0f, -1.0f },
+    { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f },
+    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, -1.0f },
 
-    { -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-    { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f },
-    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f },
-    { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-    { -0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f },
-    { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f },
+    { -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f },
+    { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f },
+    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f,  1.0f },
+    { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,  0.0f,  1.0f },
+    { -0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,  0.0f,  1.0f },
+    { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f },
 
-    { -0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
-    { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-    { -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
-    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    { -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+    { -0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f },
 
-    { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
-    { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-    { 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-    { 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
-    { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+    { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  0.0f,  0.0f },
+    { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,  0.0f,  0.0f },
+    { 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  0.0f,  0.0f },
+    { 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  0.0f,  0.0f },
+    { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  0.0f,  0.0f },
+    { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  0.0f,  0.0f },
 
-    { -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f },
-    { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-    { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f },
-    { 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f },
-    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f },
-    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f },
+    { -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f },
+    { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f },
+    { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f },
+    { 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f },
+    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f },
+    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f },
 
-    { -0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f },
-    { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f },
-    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f },
-    { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f },
-    { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f },
-    { -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f }
+    { -0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f },
+    { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f },
+    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
+    { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
+    { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f },
+    { -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f }
 };
 
 glm::vec3 cubePositions[] = {
-    /*glm::vec3( 0.0f,  0.0f,  0.0f), 
+    glm::vec3( 0.0f,  0.0f,  0.0f), 
     glm::vec3( 2.0f,  5.0f, -15.0f), 
     glm::vec3(-1.5f, -2.2f, -2.5f),  
-    glm::vec3(-3.8f, -2.0f, -12.3f),  */
-    glm::vec3( 2.4f, -0.4f, -3.5f),  
-    /*glm::vec3(-1.7f,  3.0f, -7.5f),  
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 1.0f, 0.0f, 1.0f),  
+    glm::vec3(-1.7f,  3.0f, -7.5f),  
     glm::vec3( 1.3f, -2.0f, -2.5f),  
     glm::vec3( 1.5f,  2.0f, -2.5f), 
     glm::vec3( 1.5f,  0.2f, -1.5f), 
-    glm::vec3(-1.3f,  1.0f, -1.5f)  */
+    glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
 unsigned int indices[] = {
@@ -187,7 +195,10 @@ void processInput(GLFWwindow *window)
     camera.handleKeyboard(window, dt);
 }
 
-int main() {
+std::vector<Light*> lights;
+
+int main()
+{
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -219,32 +230,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-#pragma region Textures
-    stbi_set_flip_vertically_on_load(true);
-
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("assets/discord_pfp_centerize.png", &width, &height, &nrChannels, 0);
-
-    unsigned int texture;
-    glGenTextures(1, &texture);
-
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-
-
-
-    data = stbi_load("assets/randomimg.jpg", &width, &height, &nrChannels, 0);
-
-    unsigned int texture2;
-    glGenTextures(1, &texture2);
-
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-#pragma endregion
+    Texture containerDiffuse("assets/container.png");
+    Texture containerSpecular("assets/container_specular.png");
 
 #pragma region Vertices
     unsigned int VAO;
@@ -256,14 +243,17 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(vertex, x));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)offsetof(vertex, x));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(vertex, r));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)offsetof(vertex, r));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(vertex, u));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)offsetof(vertex, u));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)offsetof(vertex, nx));
+    glEnableVertexAttribArray(3);
 
     unsigned int EBO;
     glGenBuffers(1, &EBO);
@@ -272,7 +262,46 @@ int main() {
 #pragma endregion
 
     // Shader
-    Shader shader("./assets/shaders/default.vert", "./assets/shaders/default.frag");
+    Shader litShader("./assets/shaders/lit.vert", "./assets/shaders/lit.frag");
+
+    Shader unlitShader("./assets/shaders/unlit.vert", "./assets/shaders/unlit.frag");
+
+
+    glm::vec3 lightColor = glm::vec3(0.3f);
+    glm::vec3 diffuseColor = lightColor   * glm::vec3(1.0f); 
+    glm::vec3 specularColor = lightColor   * glm::vec3(1.0f); 
+    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+    DirectionalLight* dirLight = new DirectionalLight(glm::vec3(-0.2f, -1.0f, -0.3f), ambientColor, diffuseColor, specularColor);
+
+    lightColor = hsv2rgb(180.0f * sin((float)glfwGetTime()) + 180.0f, 100.0f, 50.0f);
+
+    diffuseColor = lightColor   * glm::vec3(1.5f); 
+    specularColor = lightColor   * glm::vec3(1.5f); 
+    ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+    PointLight* pointLight = new PointLight(glm::vec3(0.0f, 0.0f, 0.0f), ambientColor, diffuseColor, specularColor);
+
+    lightColor = hsv2rgb(180.0f * cos((float)glfwGetTime()) + 180.0f, 100.0f, 50.0f);
+
+    diffuseColor = lightColor   * glm::vec3(1.5f); 
+    specularColor = lightColor   * glm::vec3(1.5f); 
+    ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+    PointLight* pointLight2 = new PointLight(glm::vec3(0.0f, 0.0f, 0.0f), ambientColor, diffuseColor, specularColor);
+
+    lightColor = glm::vec3(1.0f);
+
+    diffuseColor = lightColor   * glm::vec3(1.0f); 
+    specularColor = lightColor   * glm::vec3(1.0f); 
+    ambientColor = diffuseColor * glm::vec3(0.2f); 
+    
+    SpotLight* spotLight = new SpotLight(camera.cameraPos, camera.front, ambientColor, diffuseColor, specularColor);
+
+    lights.push_back(dirLight);
+    lights.push_back(pointLight);
+    lights.push_back(pointLight2);
+    lights.push_back(spotLight);
 
     while(!glfwWindowShouldClose(window))
     {
@@ -293,17 +322,110 @@ int main() {
         // wireframe mode
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        shader.use();
+        litShader.use();
 
         float time = glfwGetTime();
         float greenValue = (sin(time) / 2.0f) + 0.5f;
-        shader.setFloat("green", greenValue);
+        //litShader.setFloat("green", greenValue);
 
-        shader.setInt("ourTexture", 0);
-        shader.setInt("ourTexture2", 1);
+        containerDiffuse.use(GL_TEXTURE0);
+        containerSpecular.use(GL_TEXTURE1);
+
+        pointLight->lightPos = glm::vec3(1.0 + cos((float)glfwGetTime()) * 1.5, 0.0, 1.0 + sin((float)glfwGetTime()) * 1.5);
+        pointLight2->lightPos = glm::vec3(1.0 + cos((float)glfwGetTime()) * 1.5, 1.0 + sin((float)glfwGetTime()) * 1.5, -3.0);
+
+        lightColor = hsv2rgb(180.0f * sin((float)glfwGetTime()) + 180.0f, 100.0f, 50.0f);
+
+        diffuseColor = lightColor   * glm::vec3(1.0f); 
+        specularColor = lightColor   * glm::vec3(1.0f); 
+        ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+        pointLight->diffuse = diffuseColor;
+        pointLight->specular = specularColor;
+        pointLight->ambient = ambientColor;
+
+        lightColor = hsv2rgb(180.0f * cos((float)glfwGetTime()) + 180.0f, 100.0f, 50.0f);
+
+        diffuseColor = lightColor   * glm::vec3(1.0f); 
+        specularColor = lightColor   * glm::vec3(1.0f); 
+        ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+        pointLight2->diffuse = diffuseColor;
+        pointLight2->specular = specularColor;
+        pointLight2->ambient = ambientColor;
+
+        spotLight->lightPos = camera.cameraPos;
+        spotLight->lightDirection = camera.front;
+
+        litShader.setInt("lightCounts", lights.size());
+        for (size_t i = 0; i < lights.size(); i++)
+        {
+            Light* light = lights[i];
+
+            std::string val = "lights[";
+            val += std::to_string(i);
+            val += "]";
+
+            //std::cout << val << " - " << light->lightType << std::endl;
+            
+            litShader.setInt(val + ".lightType", light->lightType);
+            litShader.setVec3(val + ".direction", light->lightDirection);
+            litShader.setVec3(val + ".position", light->lightPos);
+
+            litShader.setFloat(val + ".constant", light->constant);
+            litShader.setFloat(val + ".linear", light->linear);
+            litShader.setFloat(val + ".quadratic", light->quadratic);
+
+            litShader.setFloat(val + ".cutoff", glm::cos(glm::radians(light->cutoffDegree)));
+            litShader.setFloat(val + ".outerCutoff", glm::cos(glm::radians(light->outerCutoffDegree)));
+
+            litShader.setVec3(val + ".ambient", light->ambient);
+            litShader.setVec3(val + ".diffuse", light->diffuse);
+            litShader.setVec3(val + ".specular", light->specular);
+        }
         
+
+        //litShader.setInt("ourTexture", 0);
+        //litShader.setInt("ourTexture2", 1);
+
+        //litShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+        //litShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
+        litShader.setInt("material.diffuse", 0);
+        litShader.setInt("material.specular", 1);
+        litShader.setFloat("material.shininess", 32.0f);
+
+        // glm::vec3 lightPos = glm::vec3(1.0 + cos((float)glfwGetTime()) * 1.5, 0.0, 1.0 + sin((float)glfwGetTime()) * 1.5);
+        // //glm::vec3 lightColor = hsv2rgb(180.0f * sin((float)glfwGetTime()) + 180.0f, 100.0f, 50.0f);
+        // glm::vec3 lightColor = glm::vec3(1.0f);
+
+        // glm::vec3 diffuseColor = lightColor   * glm::vec3(1.0f); 
+        // glm::vec3 specularColor = lightColor   * glm::vec3(1.0f); 
+        // glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+        
+        // litShader.setVec3("light.position", lightPos);
+        // litShader.setVec3("light.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+
+        // litShader.setFloat("light.constant", 1.0f);
+        // litShader.setFloat("light.linear", 0.09f);
+        // litShader.setFloat("light.quadratic", 0.032f);
+        
+        // litShader.setVec3("light.ambient", ambientColor);
+        // litShader.setVec3("light.diffuse", diffuseColor);
+        // litShader.setVec3("light.specular", specularColor);
+
+        // litShader.setInt("light.lightType", 2);
+        // litShader.setVec3("light.position", camera.cameraPos);
+        // litShader.setVec3("light.direction", camera.front);
+        // litShader.setFloat("light.cutoff", glm::cos(glm::radians(15.5f)));
+        // litShader.setFloat("light.outerCutoff", glm::cos(glm::radians(30.0f)));
+        
+        //std::cout << 360 * sin((float)glfwGetTime()) << std::endl;
+
         //std::cout << mixFactor << std::endl;
-        shader.setFloat("mixFactor", mixFactor);
+        //litShader.setFloat("mixFactor", mixFactor);
+        //litShader.setVec4("lightColor", glm::vec4(lightColor.x, lightColor.y, lightColor.z, 1.0));
+        //litShader.setVec3("lightPos", lightPos);
+        litShader.setVec3("viewPos", camera.cameraPos);
         //int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
@@ -318,16 +440,10 @@ int main() {
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-
         glBindVertexArray(VAO);
         //glDrawElements(GL_TRIANGLE_FAN, 6, GL_UNSIGNED_INT, (void*)(0 * sizeof(GLuint)));
-        shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
+        litShader.setMat4("view", view);
+        litShader.setMat4("projection", projection);
 
         for (int i = 0; i < sizeof(cubePositions) / sizeof(glm::vec3); i++)
         {
@@ -339,7 +455,34 @@ int main() {
                 model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
             }
 
-            shader.setMat4("model", model);
+            litShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        for (int i = 0; i < lights.size(); i++)
+        {
+            Light* light = lights[i];
+
+            if (light->lightType != LIGHT_POINT) continue;
+
+            unlitShader.use();
+
+            unlitShader.setMat4("view", view);
+            unlitShader.setMat4("projection", projection);
+            unlitShader.setVec4("ourColor", glm::vec4(light->diffuse.x, light->diffuse.y, light->diffuse.z, 1.0));
+
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, light->lightPos);
+            model = glm::scale(model, glm::vec3(0.15f));
+
+            /*
+            if (i % 3 == 0) {
+                model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+                model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+            }
+            */
+
+            unlitShader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         
