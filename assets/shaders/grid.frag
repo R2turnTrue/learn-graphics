@@ -1,6 +1,8 @@
 #version 330 core
 
-out vec4 FragColor;
+layout (location = 2) out vec3 gDiffuse;
+layout (location = 4) out vec4 gShininess;
+
 in vec2 texCoord;
 in vec3 fragPos;
 
@@ -58,6 +60,7 @@ void main()
     float distance_to_camera = length(fragPos.xz - viewPos.xz);
     float opacity_falloff = smoothstep(1.0, 0.0, distance_to_camera / fade_distance);
 
-    FragColor = color * opacity_falloff;
+    gDiffuse = (color * opacity_falloff).rgb;
+    gShininess = vec4(0.0, 1.0, 0.0, 0.0);
     //FragColor = vec4(1.0);
 }

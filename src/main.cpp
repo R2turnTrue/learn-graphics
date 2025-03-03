@@ -359,17 +359,48 @@ int main()
     lights.push_back(pointLight2);
     lights.push_back(spotLight);
 
-    unsigned int fbo;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    unsigned int gBuffer;
+    glGenFramebuffers(1, &gBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-    unsigned int textureColorbuffer;
-    glGenTextures(1, &textureColorbuffer);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportWidth, viewportHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+    unsigned int gPosition, gNormal, gDiffuse, gSpecular, gShininess;
+    glGenTextures(1, &gPosition);
+    glBindTexture(GL_TEXTURE_2D, gPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, viewportWidth, viewportHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+    glGenTextures(1, &gNormal);
+    glBindTexture(GL_TEXTURE_2D, gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, viewportWidth, viewportHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+    glGenTextures(1, &gDiffuse);
+    glBindTexture(GL_TEXTURE_2D, gDiffuse);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewportWidth, viewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDiffuse, 0);
+
+    glGenTextures(1, &gSpecular);
+    glBindTexture(GL_TEXTURE_2D, gSpecular);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewportWidth, viewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gSpecular, 0);
+
+    glGenTextures(1, &gShininess);
+    glBindTexture(GL_TEXTURE_2D, gShininess);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewportWidth, viewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, gShininess, 0);
+
+    unsigned int attachment[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+    glDrawBuffers(5, attachment);
 
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
@@ -391,7 +422,7 @@ int main()
         lastFrame = currentFrame;
 
 
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
@@ -440,9 +471,9 @@ int main()
         spotLight->lightPos = camera.cameraPos;
         spotLight->lightDirection = camera.front;
 
-        litShader.use();
+        screenShader.use();
 
-        litShader.setInt("lightCounts", lights.size());
+        screenShader.setInt("lightCounts", lights.size());
         for (size_t i = 0; i < lights.size(); i++)
         {
             Light* light = lights[i];
@@ -453,21 +484,23 @@ int main()
 
             //std::cout << val << " - " << light->lightType << std::endl;
             
-            litShader.setInt(val + ".lightType", light->lightType);
-            litShader.setVec3(val + ".direction", light->lightDirection);
-            litShader.setVec3(val + ".position", light->lightPos);
+            screenShader.setInt(val + ".lightType", light->lightType);
+            screenShader.setVec3(val + ".direction", light->lightDirection);
+            screenShader.setVec3(val + ".position", light->lightPos);
 
-            litShader.setFloat(val + ".constant", light->constant);
-            litShader.setFloat(val + ".linear", light->linear);
-            litShader.setFloat(val + ".quadratic", light->quadratic);
+            screenShader.setFloat(val + ".constant", light->constant);
+            screenShader.setFloat(val + ".linear", light->linear);
+            screenShader.setFloat(val + ".quadratic", light->quadratic);
 
-            litShader.setFloat(val + ".cutoff", glm::cos(glm::radians(light->cutoffDegree)));
-            litShader.setFloat(val + ".outerCutoff", glm::cos(glm::radians(light->outerCutoffDegree)));
+            screenShader.setFloat(val + ".cutoff", glm::cos(glm::radians(light->cutoffDegree)));
+            screenShader.setFloat(val + ".outerCutoff", glm::cos(glm::radians(light->outerCutoffDegree)));
 
-            litShader.setVec3(val + ".ambient", light->ambient);
-            litShader.setVec3(val + ".diffuse", light->diffuse);
-            litShader.setVec3(val + ".specular", light->specular);
+            screenShader.setVec3(val + ".ambient", light->ambient);
+            screenShader.setVec3(val + ".diffuse", light->diffuse);
+            screenShader.setVec3(val + ".specular", light->specular);
         }
+
+        litShader.use();
         
         litShader.setInt("material.diffuse", 0);
         litShader.setInt("material.specular", 1);
@@ -536,13 +569,6 @@ int main()
             model = glm::translate(model, light->lightPos);
             model = glm::scale(model, glm::vec3(0.15f));
 
-            /*
-            if (i % 3 == 0) {
-                model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-                model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-            }
-            */
-
             unlitShader.setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -559,8 +585,27 @@ int main()
 
         screenShader.use();
 
+        //gPosition, gNormal, gDiffuse, gSpecular
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gDiffuse);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, gSpecular);
+
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, gShininess);
+
+        screenShader.setInt("gPosition", 0);
+        screenShader.setInt("gNormal", 1);
+        screenShader.setInt("gDiffuse", 2);
+        screenShader.setInt("gSpecular", 3);
+        screenShader.setInt("gShininess", 4);
 
         screenQuad.draw(screenShader);
         
@@ -569,7 +614,7 @@ int main()
     }
 
     glDeleteRenderbuffers(1, &rbo);
-    glDeleteFramebuffers(1, &fbo);
+    glDeleteFramebuffers(1, &gBuffer);
 
     glfwTerminate();
     return 0;
