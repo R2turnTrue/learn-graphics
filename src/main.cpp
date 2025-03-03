@@ -293,14 +293,61 @@ void dispose_gbuffer()
     glDeleteFramebuffers(1, &gBuffer);
 }
 
+unsigned int depthMapFBO, depthMap;
+
+const unsigned int SHADOW_WIDTH = 1024;
+const unsigned int SHADOW_HEIGHT = 1024;
+
+void initialize_shadowMap()
+{
+    glGenFramebuffers(1, &depthMapFBO);
+
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void dispose_shadowMap()
+{
+    glDeleteTextures(1, &depthMap);
+    glDeleteFramebuffers(1, &depthMapFBO);
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     viewportWidth = width;
     viewportHeight = height;
-    glViewport(0, 0, width, height);
 
     dispose_gbuffer();
     initialize_gbuffer();
+}
+
+void drawLitModels(Model& mdl, Shader& shader)
+{
+    for (int i = 0; i < sizeof(cubePositions) / sizeof(glm::vec3); i++)
+    {
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, cubePositions[i]);
+        model = glm::scale(model, glm::vec3(1.0f));
+
+        if (i % 3 == 0) {
+            model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+        }
+
+        shader.setMat4("model", model);
+        mdl.draw(shader);
+    }
 }
 
 int main()
@@ -332,7 +379,6 @@ int main()
         return -1;
     }
 
-    glViewport(0, 0, viewportWidth, viewportHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     Texture containerDiffuse("assets/container.png");
@@ -390,6 +436,9 @@ int main()
     std::cout << "Screen Shader..." << std::endl;
     Shader screenShader("./assets/shaders/screen.vert", "./assets/shaders/screen.frag");
 
+    std::cout << "Depth Shader..." << std::endl;
+    Shader depthShader("./assets/shaders/depth.vert", "./assets/shaders/depth.frag");
+
     glm::vec3 lightColor = glm::vec3(0.3f);
     glm::vec3 diffuseColor = lightColor   * glm::vec3(1.0f);
     glm::vec3 specularColor = lightColor   * glm::vec3(1.0f);
@@ -427,6 +476,7 @@ int main()
     lights.push_back(spotLight);
 
     initialize_gbuffer();
+    initialize_shadowMap();
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
@@ -435,33 +485,9 @@ int main()
 
     while(!glfwWindowShouldClose(window))
     {
+        // UPDATE
+
         processInput(window);
-
-        float currentFrame = glfwGetTime();
-        dt = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-
-
-        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
-        glFrontFace(GL_CW);
-
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        std::string title_string = "Learn OpenGL! - FPS: ";
-        title_string += std::to_string(1/dt);
-
-        glfwSetWindowTitle(window, title_string.c_str());
-
-        // wireframe mode
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        //litShader.use();
-
         float time = glfwGetTime();
         float greenValue = (sin(time) / 2.0f) + 0.5f;
 
@@ -491,35 +517,78 @@ int main()
         spotLight->lightPos = camera.cameraPos;
         spotLight->lightDirection = camera.front;
 
-        screenShader.use();
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection(1.0f);
+        projection = glm::perspective(glm::radians(90.0f), (float)viewportWidth/(float)viewportHeight, 0.1f, 100.0f);
 
-        screenShader.setInt("lightCounts", lights.size());
-        for (size_t i = 0; i < lights.size(); i++)
-        {
-            Light* light = lights[i];
 
-            std::string val = "lights[";
-            val += std::to_string(i);
-            val += "]";
 
-            //std::cout << val << " - " << light->lightType << std::endl;
-            
-            screenShader.setInt(val + ".lightType", light->lightType);
-            screenShader.setVec3(val + ".direction", light->lightDirection);
-            screenShader.setVec3(val + ".position", light->lightPos);
 
-            screenShader.setFloat(val + ".constant", light->constant);
-            screenShader.setFloat(val + ".linear", light->linear);
-            screenShader.setFloat(val + ".quadratic", light->quadratic);
 
-            screenShader.setFloat(val + ".cutoff", glm::cos(glm::radians(light->cutoffDegree)));
-            screenShader.setFloat(val + ".outerCutoff", glm::cos(glm::radians(light->outerCutoffDegree)));
 
-            screenShader.setVec3(val + ".ambient", light->ambient);
-            screenShader.setVec3(val + ".diffuse", light->diffuse);
-            screenShader.setVec3(val + ".specular", light->specular);
-        }
 
+
+
+
+
+        float currentFrame = glfwGetTime();
+        dt = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        std::string title_string = "Learn OpenGL! - FPS: ";
+        title_string += std::to_string(1/dt);
+
+        glfwSetWindowTitle(window, title_string.c_str());
+
+        // wireframe mode
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        //litShader.use();
+
+        
+
+
+        
+        // DRAWING MAIN SCENE
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        float near_plane = 1.0f, far_plane = 7.5f;
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f), 
+                                         glm::vec3( 0.0f, 0.0f,  0.0f), 
+                                         glm::vec3( 0.0f, 1.0f,  0.0f));
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+        depthShader.use();
+        depthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_FRONT);
+            glFrontFace(GL_CW);
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+            drawLitModels(mdl, depthShader);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+
+        glViewport(0, 0, viewportWidth, viewportHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glFrontFace(GL_CW);
+
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         litShader.use();
         
         litShader.setInt("material.diffuse", 0);
@@ -528,34 +597,10 @@ int main()
 
         litShader.setVec3("viewPos", camera.cameraPos);
 
-        glm::mat4 view = camera.getViewMatrix();
-
-        glm::mat4 projection(1.0f);
-        projection = glm::perspective(glm::radians(90.0f), (float)viewportWidth/(float)viewportHeight, 0.1f, 100.0f);
-
-        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-        //glBindVertexArray(VAO);
-        //glDrawElements(GL_TRIANGLE_FAN, 6, GL_UNSIGNED_INT, (void*)(0 * sizeof(GLuint)));
-        //litShader.setVec4("ourColor", glm::vec4(1.0)); 
         litShader.setMat4("view", view);
         litShader.setMat4("projection", projection);
 
-        for (int i = 0; i < sizeof(cubePositions) / sizeof(glm::vec3); i++)
-        {
-            glm::mat4 model(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            model = glm::scale(model, glm::vec3(1.0f));
-
-            if (i % 3 == 0) {
-                model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-                model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-            }
-
-            litShader.setMat4("model", model);
-            mdl.draw(litShader);
-            //glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        drawLitModels(mdl, litShader);
 
         {
             gridShader.use();
@@ -593,6 +638,17 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+
+
+
+
+
+
+
+
+
+
         
         //glBindVertexArray(VAO);
 
@@ -604,6 +660,33 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         screenShader.use();
+
+        screenShader.setInt("lightCounts", lights.size());
+        for (size_t i = 0; i < lights.size(); i++)
+        {
+            Light* light = lights[i];
+
+            std::string val = "lights[";
+            val += std::to_string(i);
+            val += "]";
+
+            //std::cout << val << " - " << light->lightType << std::endl;
+            
+            screenShader.setInt(val + ".lightType", light->lightType);
+            screenShader.setVec3(val + ".direction", light->lightDirection);
+            screenShader.setVec3(val + ".position", light->lightPos);
+
+            screenShader.setFloat(val + ".constant", light->constant);
+            screenShader.setFloat(val + ".linear", light->linear);
+            screenShader.setFloat(val + ".quadratic", light->quadratic);
+
+            screenShader.setFloat(val + ".cutoff", glm::cos(glm::radians(light->cutoffDegree)));
+            screenShader.setFloat(val + ".outerCutoff", glm::cos(glm::radians(light->outerCutoffDegree)));
+
+            screenShader.setVec3(val + ".ambient", light->ambient);
+            screenShader.setVec3(val + ".diffuse", light->diffuse);
+            screenShader.setVec3(val + ".specular", light->specular);
+        }
 
         //gPosition, gNormal, gDiffuse, gSpecular
         glActiveTexture(GL_TEXTURE0);
@@ -621,11 +704,15 @@ int main()
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, gShininess);
 
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+
         screenShader.setInt("gPosition", 0);
         screenShader.setInt("gNormal", 1);
         screenShader.setInt("gDiffuse", 2);
         screenShader.setInt("gSpecular", 3);
         screenShader.setInt("gShininess", 4);
+        screenShader.setInt("gDepth", 5);
 
         screenQuad.draw(screenShader);
         
@@ -634,6 +721,7 @@ int main()
     }
 
     dispose_gbuffer();
+    dispose_shadowMap();
 
     glfwTerminate();
     return 0;

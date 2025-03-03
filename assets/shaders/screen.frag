@@ -39,6 +39,7 @@ uniform sampler2D gNormal;
 uniform sampler2D gDiffuse;
 uniform sampler2D gSpecular;
 uniform sampler2D gShininess;
+uniform sampler2D gDepth;
 
 uniform vec3 viewPos;
 uniform Light lights[MAX_LIGHTS];
@@ -61,6 +62,8 @@ vec4 kawaseBlur(vec2 uv, sampler2D originalTexture, float pixelOffset, vec2 texe
 
 void main()
 {
+    //FragColor = vec4(vec3(texture(gDepth, uv).r), 1.0);
+    //return;
     vec4 output = vec4(0.0);
 
     vec3 fragPos = texture(gPosition, uv).xyz;
