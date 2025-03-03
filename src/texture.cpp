@@ -3,6 +3,8 @@
 
 Texture::Texture(const GLchar* texturePath)
 {
+    this->path = texturePath;
+
     stbi_set_flip_vertically_on_load(true);
     
     unsigned char *data = stbi_load(texturePath, &width, &height, &nrChannels, 0);

@@ -1,5 +1,6 @@
 # define M_PI 3.14159265358979323846
 
+#include "model.h"
 #include <stb_image.h>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -77,18 +78,18 @@ vertex vertices[] = {
     { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,  0.0f, -1.0f },
 
     { -0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f },
-    { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f },
-    { 0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f,  1.0f },
+    { 0.5f, 0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f },
+    { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f,  1.0f },
     { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,  0.0f,  1.0f },
-    { -0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,  0.0f,  1.0f },
-    { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f },
+    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,  0.0f,  1.0f },
+    { -0.5f, 0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  1.0f },
 
     { -0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f },
-    { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f,  0.0f,  0.0f },
-    { -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f,  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, -1.0f,  0.0f,  0.0f },
     { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  0.0f,  0.0f },
-    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f },
-    { -0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f },
+    { -0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f },
 
     { 0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  0.0f,  0.0f },
     { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,  0.0f,  0.0f },
@@ -98,11 +99,11 @@ vertex vertices[] = {
     { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  0.0f,  0.0f },
 
     { -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f },
-    { 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f },
-    { 0.5f, -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f },
+    { 0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f },
+    { 0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f },
     { 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f },
-    { -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f },
-    { -0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f },
+    { -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f },
+    { -0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f },
 
     { -0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f },
     { 0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f },
@@ -110,6 +111,44 @@ vertex vertices[] = {
     { 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f },
     { -0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f },
     { -0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f }
+};
+
+Vertex planeVertices[] = {
+    // Top-Left
+    { glm::vec3(-0.5f, 0.0f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0, 1.0) },
+    
+    // Top-Right
+    { glm::vec3(0.5f, 0.0f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0, 1.0) },
+
+    // Bottom-Left
+    { glm::vec3(-0.5f, 0.0f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0, 0.0) },
+    
+    // Bottom-Right
+    { glm::vec3(0.5f, 0.0f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0, 0.0) }
+};
+
+unsigned int planeIndices[] = {
+    1, 3, 2,
+    2, 0, 1
+};
+
+Vertex screenQuadVertices[] = {
+    // Top-Left
+    { glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0, 1.0) },
+    
+    // Top-Right
+    { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0, 1.0) },
+
+    // Bottom-Left
+    { glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0, 0.0) },
+    
+    // Bottom-Right
+    { glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0, 0.0) }
+};
+
+unsigned int screenQuadIndices[] = {
+    1, 3, 2,
+    2, 0, 1
 };
 
 glm::vec3 cubePositions[] = {
@@ -227,7 +266,6 @@ int main()
     }
 
     glViewport(0, 0, viewportWidth, viewportHeight);
-    glEnable(GL_DEPTH_TEST);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     Texture containerDiffuse("assets/container.png");
@@ -259,18 +297,36 @@ int main()
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-#pragma endregion
+   #pragma endregion
+
+    std::vector<Vertex> planeVerticesVec(std::begin(planeVertices), std::end(planeVertices));
+    std::vector<unsigned int> planeIndicesVec(std::begin(planeIndices), std::end(planeIndices));
+
+   Mesh planeMesh(planeVerticesVec, planeIndicesVec);
+
+    std::vector<Vertex> screenQuadVerticesVec(std::begin(screenQuadVertices), std::end(screenQuadVertices));
+    std::vector<unsigned int> screenQuadIndicesVec(std::begin(screenQuadIndices), std::end(screenQuadIndices));
+
+   Mesh screenQuad(screenQuadVerticesVec, screenQuadIndicesVec);
+   Model mdl("assets/intellij/intellij.obj");
 
     // Shader
+    std::cout << "Lit Shader..." << std::endl;
     Shader litShader("./assets/shaders/lit.vert", "./assets/shaders/lit.frag");
 
+    std::cout << "Grid Shader..." << std::endl;
+    Shader gridShader("./assets/shaders/grid.vert", "./assets/shaders/grid.frag");
+
+    std::cout << "Unlit Shader..." << std::endl;
     Shader unlitShader("./assets/shaders/unlit.vert", "./assets/shaders/unlit.frag");
 
+    std::cout << "Screen Shader..." << std::endl;
+    Shader screenShader("./assets/shaders/screen.vert", "./assets/shaders/screen.frag");
 
     glm::vec3 lightColor = glm::vec3(0.3f);
-    glm::vec3 diffuseColor = lightColor   * glm::vec3(1.0f); 
-    glm::vec3 specularColor = lightColor   * glm::vec3(1.0f); 
-    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+    glm::vec3 diffuseColor = lightColor   * glm::vec3(1.0f);
+    glm::vec3 specularColor = lightColor   * glm::vec3(1.0f);
+    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
     DirectionalLight* dirLight = new DirectionalLight(glm::vec3(-0.2f, -1.0f, -0.3f), ambientColor, diffuseColor, specularColor);
 
@@ -303,6 +359,29 @@ int main()
     lights.push_back(pointLight2);
     lights.push_back(spotLight);
 
+    unsigned int fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    unsigned int textureColorbuffer;
+    glGenTextures(1, &textureColorbuffer);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, viewportWidth, viewportHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1280, 720);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     while(!glfwWindowShouldClose(window))
     {
         processInput(window);
@@ -310,6 +389,14 @@ int main()
         float currentFrame = glfwGetTime();
         dt = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glFrontFace(GL_CW);
+
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -322,14 +409,10 @@ int main()
         // wireframe mode
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        litShader.use();
+        //litShader.use();
 
         float time = glfwGetTime();
         float greenValue = (sin(time) / 2.0f) + 0.5f;
-        //litShader.setFloat("green", greenValue);
-
-        containerDiffuse.use(GL_TEXTURE0);
-        containerSpecular.use(GL_TEXTURE1);
 
         pointLight->lightPos = glm::vec3(1.0 + cos((float)glfwGetTime()) * 1.5, 0.0, 1.0 + sin((float)glfwGetTime()) * 1.5);
         pointLight2->lightPos = glm::vec3(1.0 + cos((float)glfwGetTime()) * 1.5, 1.0 + sin((float)glfwGetTime()) * 1.5, -3.0);
@@ -356,6 +439,8 @@ int main()
 
         spotLight->lightPos = camera.cameraPos;
         spotLight->lightDirection = camera.front;
+
+        litShader.use();
 
         litShader.setInt("lightCounts", lights.size());
         for (size_t i = 0; i < lights.size(); i++)
@@ -384,64 +469,22 @@ int main()
             litShader.setVec3(val + ".specular", light->specular);
         }
         
-
-        //litShader.setInt("ourTexture", 0);
-        //litShader.setInt("ourTexture2", 1);
-
-        //litShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
-        //litShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
         litShader.setInt("material.diffuse", 0);
         litShader.setInt("material.specular", 1);
         litShader.setFloat("material.shininess", 32.0f);
 
-        // glm::vec3 lightPos = glm::vec3(1.0 + cos((float)glfwGetTime()) * 1.5, 0.0, 1.0 + sin((float)glfwGetTime()) * 1.5);
-        // //glm::vec3 lightColor = hsv2rgb(180.0f * sin((float)glfwGetTime()) + 180.0f, 100.0f, 50.0f);
-        // glm::vec3 lightColor = glm::vec3(1.0f);
-
-        // glm::vec3 diffuseColor = lightColor   * glm::vec3(1.0f); 
-        // glm::vec3 specularColor = lightColor   * glm::vec3(1.0f); 
-        // glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
-        
-        // litShader.setVec3("light.position", lightPos);
-        // litShader.setVec3("light.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-
-        // litShader.setFloat("light.constant", 1.0f);
-        // litShader.setFloat("light.linear", 0.09f);
-        // litShader.setFloat("light.quadratic", 0.032f);
-        
-        // litShader.setVec3("light.ambient", ambientColor);
-        // litShader.setVec3("light.diffuse", diffuseColor);
-        // litShader.setVec3("light.specular", specularColor);
-
-        // litShader.setInt("light.lightType", 2);
-        // litShader.setVec3("light.position", camera.cameraPos);
-        // litShader.setVec3("light.direction", camera.front);
-        // litShader.setFloat("light.cutoff", glm::cos(glm::radians(15.5f)));
-        // litShader.setFloat("light.outerCutoff", glm::cos(glm::radians(30.0f)));
-        
-        //std::cout << 360 * sin((float)glfwGetTime()) << std::endl;
-
-        //std::cout << mixFactor << std::endl;
-        //litShader.setFloat("mixFactor", mixFactor);
-        //litShader.setVec4("lightColor", glm::vec4(lightColor.x, lightColor.y, lightColor.z, 1.0));
-        //litShader.setVec3("lightPos", lightPos);
         litShader.setVec3("viewPos", camera.cameraPos);
-        //int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        //glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-
-        //float radius = 10.0f;
-        //cameraPos.x = sin(glfwGetTime()) * radius;
-        //cameraPos.z = cos(glfwGetTime()) * radius;
 
         glm::mat4 view = camera.getViewMatrix();
 
         glm::mat4 projection(1.0f);
         projection = glm::perspective(glm::radians(90.0f), (float)viewportWidth/(float)viewportHeight, 0.1f, 100.0f);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
-        glBindVertexArray(VAO);
+        //glBindVertexArray(VAO);
         //glDrawElements(GL_TRIANGLE_FAN, 6, GL_UNSIGNED_INT, (void*)(0 * sizeof(GLuint)));
+        //litShader.setVec4("ourColor", glm::vec4(1.0)); 
         litShader.setMat4("view", view);
         litShader.setMat4("projection", projection);
 
@@ -449,6 +492,7 @@ int main()
         {
             glm::mat4 model(1.0f);
             model = glm::translate(model, cubePositions[i]);
+            model = glm::scale(model, glm::vec3(1.0f));
 
             if (i % 3 == 0) {
                 model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -456,7 +500,21 @@ int main()
             }
 
             litShader.setMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            mdl.draw(litShader);
+            //glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        {
+            gridShader.use();
+
+            gridShader.setVec3("viewPos", camera.cameraPos);
+            gridShader.setMat4("view", view);
+            gridShader.setMat4("projection", projection);
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, glm::vec3(camera.cameraPos.x, 0.0f, camera.cameraPos.z));
+            model = glm::scale(model, glm::vec3(100.0f));
+            gridShader.setMat4("model", model);
+            planeMesh.draw(gridShader);
         }
 
         for (int i = 0; i < lights.size(); i++)
@@ -464,6 +522,9 @@ int main()
             Light* light = lights[i];
 
             if (light->lightType != LIGHT_POINT) continue;
+
+            glBindVertexArray(VAO);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
             unlitShader.use();
 
@@ -483,14 +544,32 @@ int main()
             */
 
             unlitShader.setMat4("model", model);
+
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         
         //glBindVertexArray(VAO);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // default fbo
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        screenShader.use();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+
+        screenQuad.draw(screenShader);
         
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    glDeleteRenderbuffers(1, &rbo);
+    glDeleteFramebuffers(1, &fbo);
 
     glfwTerminate();
     return 0;

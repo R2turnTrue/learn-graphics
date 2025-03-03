@@ -7,8 +7,14 @@
 #define MAX_LIGHTS 15
 
 struct Material {
-    sampler2D diffuse;
-    sampler2D specular;
+    sampler2D diffuse0;
+    sampler2D specular0;
+
+    vec4 diffuse_col0;
+    bool diffuse_col0_for_col;
+    vec4 specular_col0;
+    bool specular_col0_for_col;
+
     float shininess;
 };
 
@@ -37,7 +43,6 @@ struct Light {
 };
 
 out vec4 FragColor;
-in vec4 vertexColor;
 in vec2 texCoord;
 in vec3 normal;
 in vec3 fragPos;
@@ -53,12 +58,21 @@ void main()
 
     vec4 output = vec4(0.0);
 
+    vec4 dif0 = texture(material.diffuse0, texCoord);
+    vec4 spec0 = texture(material.specular0, texCoord);
+    
+    if (material.diffuse_col0_for_col)
+        dif0 = material.diffuse_col0;
+    
+    if (material.specular_col0_for_col)
+        spec0 = material.specular_col0;
+
     for (int i = 0; i < lightCounts; i++)
     {
         Light light = lights[i];
 
         //// AMBIENT
-        vec4 ambient = vec4(light.ambient, 1.0) * texture(material.diffuse, texCoord);
+        vec4 ambient = vec4(light.ambient, 1.0) * dif0;
 
         //// NORMAL & LIGHT DIRECTION
         vec3 norm = normalize(normal);
@@ -71,13 +85,13 @@ void main()
 
         //// DIFFUSE
         float diff = max(dot(norm, lightDir), 0.0);
-        vec4 diffuse = texture(material.diffuse, texCoord) * diff * vec4(light.diffuse, 1.0);
+        vec4 diffuse = dif0 * diff * vec4(light.diffuse, 1.0);
 
         //// SPECULAR
         vec3 viewDir = normalize(viewPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-        vec4 specular = texture(material.specular, texCoord) * spec * vec4(light.specular, 1.0);
+        vec4 specular = spec0 * spec * vec4(light.specular, 1.0);
 
         if (light.lightType == LIGHT_POINT || light.lightType == LIGHT_SPOT)
         {
@@ -104,4 +118,6 @@ void main()
         output += result;
     }
     FragColor = output;
+    //FragColor = material.diffuse_col0;
+    //FragColor = vec4(1.0);
 }

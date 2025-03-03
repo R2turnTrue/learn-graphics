@@ -2,6 +2,17 @@ cmake_minimum_required(VERSION 3.11)
 include(FetchContent)
 include(ae2f.cmake)
 
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+
+ae2f_CoreLibFetch(
+    assimp
+    assimp
+    v5.4.3
+)
+
 ae2f_CoreLibFetch(
     glfw
     glfw
@@ -22,4 +33,4 @@ file(GLOB_RECURSE VAR "${PROJECT_SOURCE_DIR}/src/*.c*")
 add_executable (learngraphics ${VAR})
 
 target_include_directories(learngraphics PUBLIC "src")
-target_link_libraries(learngraphics PRIVATE glfw glad stb_image glm::glm)
+target_link_libraries(learngraphics PRIVATE glfw glad stb_image glm::glm assimp)
