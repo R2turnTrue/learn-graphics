@@ -230,7 +230,7 @@ void processInput(GLFWwindow *window)
 std::vector<Light*> lights;
 
 unsigned int gBuffer;
-unsigned int gPosition, gNormal, gDiffuse, gSpecular, gShininess;
+unsigned int gPosition, gNormal, gDiffuse, gSpecular, gShininess, gLightPosition;
 unsigned int rbo;
 
 void initialize_gbuffer()
@@ -273,8 +273,15 @@ void initialize_gbuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, gShininess, 0);
 
-    unsigned int attachment[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-    glDrawBuffers(5, attachment);
+    glGenTextures(1, &gLightPosition);
+    glBindTexture(GL_TEXTURE_2D, gLightPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, viewportWidth, viewportHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, gLightPosition, 0);
+
+    unsigned int attachment[6] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5 };
+    glDrawBuffers(6, attachment);
 
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -707,12 +714,16 @@ int main()
         glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, depthMap);
 
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_2D, gLightPosition);
+
         screenShader.setInt("gPosition", 0);
         screenShader.setInt("gNormal", 1);
         screenShader.setInt("gDiffuse", 2);
         screenShader.setInt("gSpecular", 3);
         screenShader.setInt("gShininess", 4);
         screenShader.setInt("gDepth", 5);
+        screenShader.setInt("gLightPosition", 6);
 
         screenQuad.draw(screenShader);
         

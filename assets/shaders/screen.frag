@@ -40,6 +40,7 @@ uniform sampler2D gDiffuse;
 uniform sampler2D gSpecular;
 uniform sampler2D gShininess;
 uniform sampler2D gDepth;
+uniform sampler2D gLightPosition;
 
 uniform vec3 viewPos;
 uniform Light lights[MAX_LIGHTS];
@@ -60,6 +61,17 @@ vec4 kawaseBlur(vec2 uv, sampler2D originalTexture, float pixelOffset, vec2 texe
     return o;
 }
 
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+    float closestDepth = texture(gDepth, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+    float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
+}
+
 void main()
 {
     //FragColor = vec4(vec3(texture(gDepth, uv).r), 1.0);
@@ -72,6 +84,7 @@ void main()
     vec4 gSpec = texture(gSpecular, uv);
     vec4 gShin = texture(gShininess, uv);
     float shininess = gShin.r;
+    vec4 fragPosLightSpace = texture(gLightPosition, uv);
 
     if (gShin.g > 0.5)
     {
@@ -124,7 +137,9 @@ void main()
             specular *= intensity;
         }
 
-        vec4 result = ambient + diffuse + specular;
+        float shadow = ShadowCalculation(fragPosLightSpace);
+
+        vec4 result = (ambient + (1.0 - shadow) * (diffuse + specular));
 
         output += result;
     }
