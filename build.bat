@@ -1,6 +1,6 @@
 @echo off
 mkdir build
 cd build
-cmake .. -DCMAKE_C_COMPILER:FILEPATH=C:\clang\bin\clang.exe -DCMAKE_CXX_COMPILER:FILEPATH=C:\clang\bin\clang++.exe -G "Ninja"
+cmake .. -DCMAKE_C_COMPILER:FILEPATH=gcc.exe -DCMAKE_CXX_COMPILER:FILEPATH=g++.exe -G "Ninja"
 ninja
 cd ..
